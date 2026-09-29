@@ -30,3 +30,12 @@ python scripts/block_times.py 50
 |---|---|---|
 | Chain ID | 8453 | 84532 |
 | RPC | https://mainnet.base.org | https://sepolia.base.org |
+## Scripts
+
+| Script | What it does |
+|---|---|
+| `scripts/latest_block.py` | Prints details of the latest Base block |
+| `scripts/block_times.py [N]` | Average time between the last N blocks |
+| `scripts/usdc_transfers.py [N]` | Recent USDC Transfer events over the last N blocks |
+| `scripts/compare_fees.py` | Compares simple transfer cost on Base and Ethereum L1 |
+| `scripts/export_blocks.py [N] [path]` | Exports stats of the last N blocks to CSV |
