@@ -25,3 +25,7 @@ Range: blocks 51974687 to 51974786 (about 3.3 minutes)
 ## Next questions
 - How do throughput and base fee change over a full day?
 - What does the base fee do during a burst of activity?
+
+## Chart
+
+![Transactions per block and gas utilization](blocks.png)
