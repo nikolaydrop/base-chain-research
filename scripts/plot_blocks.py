@@ -37,6 +37,7 @@ def main():
     ax2.plot(blocks, util, color="tab:orange")
     ax2.set_ylabel("Gas used (% of limit)")
     ax2.set_xlabel("Block number")
+    ax2.ticklabel_format(axis="x", useOffset=False, style="plain")
     fig.tight_layout()
 
     os.makedirs(os.path.dirname(out) or ".", exist_ok=True)
