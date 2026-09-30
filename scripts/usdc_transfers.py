@@ -1,6 +1,10 @@
-"""Show recent USDC Transfer events on Base. Read-only, no wallet required."""
+"""Show recent USDC Transfer events on Base. Read-only, no wallet required.
+
+Usage: python scripts/usdc_transfers.py [N_BLOCKS]
+"""
 import os
 import sys
+from collections import defaultdict
 
 from web3 import Web3
 
@@ -10,9 +14,40 @@ TRANSFER_TOPIC = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523
 DECIMALS = 6
 
 
-def short(addr_bytes):
-    addr = Web3.to_checksum_address(bytes(addr_bytes)[-20:])
+def short(addr):
     return f"{addr[:6]}...{addr[-4:]}"
+
+
+def to_address(topic):
+    """Convert a 32-byte indexed topic into a checksummed address."""
+    return Web3.to_checksum_address(bytes(topic)[-20:])
+
+
+def decode_transfer(log):
+    """Turn a raw Transfer log into a simple dict."""
+    return {
+        "block": log["blockNumber"],
+        "from": to_address(log["topics"][1]),
+        "to": to_address(log["topics"][2]),
+        "amount": int.from_bytes(bytes(log["data"]), "big") / 10**DECIMALS,
+    }
+
+
+def summarize(transfers, top_n=5):
+    """Count transfers, unique addresses and the biggest senders."""
+    sent = defaultdict(float)
+    receivers = set()
+    for t in transfers:
+        sent[t["from"]] += t["amount"]
+        receivers.add(t["to"])
+    top = sorted(sent.items(), key=lambda kv: kv[1], reverse=True)[:top_n]
+    return {
+        "count": len(transfers),
+        "total": sum(t["amount"] for t in transfers),
+        "unique_senders": len(sent),
+        "unique_receivers": len(receivers),
+        "top_senders": top,
+    }
 
 
 def main():
@@ -28,18 +63,21 @@ def main():
         "address": Web3.to_checksum_address(USDC),
         "topics": [TRANSFER_TOPIC],
     })
+    transfers = [decode_transfer(log) for log in logs if len(log["topics"]) == 3]
 
-    total = 0
-    for log in logs[:15]:
-        amount = int.from_bytes(bytes(log["data"]), "big") / 10**DECIMALS
-        print(f"block {log['blockNumber']}: {short(log['topics'][1])} -> "
-              f"{short(log['topics'][2])}  {amount:,.2f} USDC")
-    for log in logs:
-        total += int.from_bytes(bytes(log["data"]), "big") / 10**DECIMALS
+    for t in transfers[:15]:
+        print(f"block {t['block']}: {short(t['from'])} -> {short(t['to'])}  "
+              f"{t['amount']:,.2f} USDC")
 
-    print(f"\nBlocks scanned:   {n_blocks}")
-    print(f"USDC transfers:   {len(logs)}")
-    print(f"Total moved:      {total:,.2f} USDC")
+    s = summarize(transfers)
+    print(f"\nBlocks scanned:    {n_blocks}")
+    print(f"USDC transfers:    {s['count']}")
+    print(f"Total moved:       {s['total']:,.2f} USDC")
+    print(f"Unique senders:    {s['unique_senders']}")
+    print(f"Unique receivers:  {s['unique_receivers']}")
+    print("Top senders by amount:")
+    for addr, amount in s["top_senders"]:
+        print(f"  {short(addr)}  {amount:,.2f} USDC")
 
 
 if __name__ == "__main__":
