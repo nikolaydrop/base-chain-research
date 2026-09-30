@@ -1,9 +1,11 @@
 """Show recent USDC Transfer events on Base. Read-only, no wallet required.
 
-Usage: python scripts/usdc_transfers.py [N_BLOCKS]
+Usage: python scripts/usdc_transfers.py [N_BLOCKS] [--full]
+  N_BLOCKS  how many recent blocks to scan (default: 10)
+  --full    print full addresses instead of shortened ones
 """
+import argparse
 import os
-import sys
 from collections import defaultdict
 
 from web3 import Web3
@@ -14,8 +16,18 @@ TRANSFER_TOPIC = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523
 DECIMALS = 6
 
 
-def short(addr):
-    return f"{addr[:6]}...{addr[-4:]}"
+def parse_args(argv=None):
+    parser = argparse.ArgumentParser(description="Recent USDC transfers on Base")
+    parser.add_argument("blocks", nargs="?", type=int, default=10,
+                        help="number of recent blocks to scan (default: 10)")
+    parser.add_argument("--full", action="store_true",
+                        help="print full addresses instead of shortened ones")
+    return parser.parse_args(argv)
+
+
+def format_address(addr, full=False):
+    """Return the address as is, or shortened like 0x1234...abcd."""
+    return addr if full else f"{addr[:6]}...{addr[-4:]}"
 
 
 def to_address(topic):
@@ -51,14 +63,14 @@ def summarize(transfers, top_n=5):
 
 
 def main():
-    n_blocks = int(sys.argv[1]) if len(sys.argv) > 1 else 10
+    args = parse_args()
     w3 = Web3(Web3.HTTPProvider(RPC_URL))
     if not w3.is_connected():
         raise SystemExit(f"Could not connect to {RPC_URL}")
 
     latest = w3.eth.block_number
     logs = w3.eth.get_logs({
-        "fromBlock": latest - n_blocks + 1,
+        "fromBlock": latest - args.blocks + 1,
         "toBlock": latest,
         "address": Web3.to_checksum_address(USDC),
         "topics": [TRANSFER_TOPIC],
@@ -66,18 +78,19 @@ def main():
     transfers = [decode_transfer(log) for log in logs if len(log["topics"]) == 3]
 
     for t in transfers[:15]:
-        print(f"block {t['block']}: {short(t['from'])} -> {short(t['to'])}  "
-              f"{t['amount']:,.2f} USDC")
+        sender = format_address(t["from"], args.full)
+        receiver = format_address(t["to"], args.full)
+        print(f"block {t['block']}: {sender} -> {receiver}  {t['amount']:,.2f} USDC")
 
     s = summarize(transfers)
-    print(f"\nBlocks scanned:    {n_blocks}")
+    print(f"\nBlocks scanned:    {args.blocks}")
     print(f"USDC transfers:    {s['count']}")
     print(f"Total moved:       {s['total']:,.2f} USDC")
     print(f"Unique senders:    {s['unique_senders']}")
     print(f"Unique receivers:  {s['unique_receivers']}")
     print("Top senders by amount:")
     for addr, amount in s["top_senders"]:
-        print(f"  {short(addr)}  {amount:,.2f} USDC")
+        print(f"  {format_address(addr, args.full)}  {amount:,.2f} USDC")
 
 
 if __name__ == "__main__":
