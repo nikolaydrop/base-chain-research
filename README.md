@@ -1,5 +1,7 @@
 # base-chain-research
 
+![tests](https://github.com/nikolaydrop/base-chain-research/actions/workflows/tests.yml/badge.svg)
+
 Research of the Base blockchain (Coinbase's L2 built on the OP Stack) using real on-chain data.
 
 ## Goals
