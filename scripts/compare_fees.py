@@ -7,21 +7,17 @@ import os
 
 from web3 import Web3
 
-BASE_RPC = os.getenv("BASE_RPC_URL", "https://mainnet.base.org")
+from rpc import DEFAULT_RPC, connect, with_retry
+
+BASE_RPC = os.getenv("BASE_RPC_URL", DEFAULT_RPC)
 ETH_RPC = os.getenv("ETH_RPC_URL", "https://ethereum-rpc.publicnode.com")
 TRANSFER_GAS = 21_000
 
 
-def connect(url):
-    w3 = Web3(Web3.HTTPProvider(url))
-    if not w3.is_connected():
-        raise SystemExit(f"Could not connect to {url}")
-    return w3
-
-
 def snapshot(w3):
-    block = w3.eth.get_block("latest")
-    gas_price = w3.eth.gas_price
+    """Read the latest block and gas price and work out a transfer's cost."""
+    block = with_retry(w3.eth.get_block, "latest")
+    gas_price = with_retry(lambda: w3.eth.gas_price)
     return {
         "chain_id": w3.eth.chain_id,
         "block": block["number"],
@@ -29,6 +25,13 @@ def snapshot(w3):
         "gas_price_gwei": Web3.from_wei(gas_price, "gwei"),
         "cost_eth": Web3.from_wei(gas_price * TRANSFER_GAS, "ether"),
     }
+
+
+def cost_ratio(base, eth):
+    """How many times more expensive Ethereum is than Base (None if Base is free)."""
+    if base["cost_eth"] <= 0:
+        return None
+    return eth["cost_eth"] / base["cost_eth"]
 
 
 def show(name, s):
@@ -46,8 +49,8 @@ def main():
     print()
     show("Ethereum L1", eth)
     print()
-    if base["cost_eth"] > 0:
-        ratio = eth["cost_eth"] / base["cost_eth"]
+    ratio = cost_ratio(base, eth)
+    if ratio is not None:
         print(f"Ethereum L1 is about {ratio:,.0f}x more expensive than Base right now.")
 
 
