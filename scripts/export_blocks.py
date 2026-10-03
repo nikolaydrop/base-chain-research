@@ -7,37 +7,45 @@ import csv
 import os
 import sys
 
-from web3 import Web3
+from rpc import connect, with_retry
 
-RPC_URL = os.getenv("BASE_RPC_URL", "https://mainnet.base.org")
 FIELDS = ["block", "timestamp", "tx_count", "gas_used", "gas_limit", "base_fee_wei"]
+
+
+def block_row(block):
+    """Turn a block into one CSV row."""
+    return [
+        block["number"],
+        block["timestamp"],
+        len(block["transactions"]),
+        block["gasUsed"],
+        block["gasLimit"],
+        block.get("baseFeePerGas", 0),
+    ]
+
+
+def write_csv(path, rows):
+    """Write rows with a header to path, creating folders if needed."""
+    os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+    with open(path, "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(FIELDS)
+        writer.writerows(rows)
 
 
 def main():
     n = int(sys.argv[1]) if len(sys.argv) > 1 else 100
     out = sys.argv[2] if len(sys.argv) > 2 else "data/blocks.csv"
+    if n < 1:
+        raise SystemExit("N must be at least 1")
 
-    w3 = Web3(Web3.HTTPProvider(RPC_URL))
-    if not w3.is_connected():
-        raise SystemExit(f"Could not connect to {RPC_URL}")
-
+    w3 = connect()
     latest = w3.eth.block_number
-    os.makedirs(os.path.dirname(out) or ".", exist_ok=True)
-
-    with open(out, "w", newline="") as f:
-        writer = csv.writer(f)
-        writer.writerow(FIELDS)
-        for number in range(latest - n + 1, latest + 1):
-            b = w3.eth.get_block(number)
-            writer.writerow([
-                b["number"],
-                b["timestamp"],
-                len(b["transactions"]),
-                b["gasUsed"],
-                b["gasLimit"],
-                b.get("baseFeePerGas", 0),
-            ])
-
+    rows = [
+        block_row(with_retry(w3.eth.get_block, number))
+        for number in range(latest - n + 1, latest + 1)
+    ]
+    write_csv(out, rows)
     print(f"Wrote {n} blocks (up to block {latest}) to {out}")
 
 
