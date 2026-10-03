@@ -26,6 +26,9 @@ python scripts/block_times.py 50
 - `scripts/` scripts for querying the network
 - `data/` data exports
 - `analysis/` reports and charts
+- `tests/` unit tests (run with pytest)
+- `.github/workflows/` CI that runs the tests on every push
+- `scripts/rpc.py` shared helper for connecting to the RPC with retries
 
 ## Network parameters
 | | Mainnet | Sepolia (testnet) |
