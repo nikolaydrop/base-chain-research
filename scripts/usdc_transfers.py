@@ -5,12 +5,12 @@ Usage: python scripts/usdc_transfers.py [N_BLOCKS] [--full]
   --full    print full addresses instead of shortened ones
 """
 import argparse
-import os
 from collections import defaultdict
 
 from web3 import Web3
 
-RPC_URL = os.getenv("BASE_RPC_URL", "https://mainnet.base.org")
+from rpc import connect, with_retry
+
 USDC = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"  # native USDC on Base
 TRANSFER_TOPIC = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
 DECIMALS = 6
@@ -64,12 +64,12 @@ def summarize(transfers, top_n=5):
 
 def main():
     args = parse_args()
-    w3 = Web3(Web3.HTTPProvider(RPC_URL))
-    if not w3.is_connected():
-        raise SystemExit(f"Could not connect to {RPC_URL}")
+    if args.blocks < 1:
+        raise SystemExit("N_BLOCKS must be at least 1")
 
+    w3 = connect()
     latest = w3.eth.block_number
-    logs = w3.eth.get_logs({
+    logs = with_retry(w3.eth.get_logs, {
         "fromBlock": latest - args.blocks + 1,
         "toBlock": latest,
         "address": Web3.to_checksum_address(USDC),
