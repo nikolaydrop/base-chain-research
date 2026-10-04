@@ -1,10 +1,12 @@
 """Show recent USDC Transfer events on Base. Read-only, no wallet required.
 
-Usage: python scripts/usdc_transfers.py [N_BLOCKS] [--full]
+Usage: python scripts/usdc_transfers.py [N_BLOCKS] [--full] [--json]
   N_BLOCKS  how many recent blocks to scan (default: 10)
   --full    print full addresses instead of shortened ones
+  --json    print only the summary, as JSON
 """
 import argparse
+import json
 from collections import defaultdict
 
 from web3 import Web3
@@ -22,6 +24,8 @@ def parse_args(argv=None):
                         help="number of recent blocks to scan (default: 10)")
     parser.add_argument("--full", action="store_true",
                         help="print full addresses instead of shortened ones")
+    parser.add_argument("--json", action="store_true",
+                        help="print only the summary, as JSON")
     return parser.parse_args(argv)
 
 
@@ -62,6 +66,21 @@ def summarize(transfers, top_n=5):
     }
 
 
+def summary_to_dict(summary, blocks, full=False):
+    """Make the summary JSON friendly (top senders become a list of dicts)."""
+    return {
+        "blocks_scanned": blocks,
+        "transfers": summary["count"],
+        "total_usdc": round(summary["total"], 2),
+        "unique_senders": summary["unique_senders"],
+        "unique_receivers": summary["unique_receivers"],
+        "top_senders": [
+            {"address": format_address(addr, full), "usdc": round(amount, 2)}
+            for addr, amount in summary["top_senders"]
+        ],
+    }
+
+
 def main():
     args = parse_args()
     if args.blocks < 1:
@@ -76,13 +95,17 @@ def main():
         "topics": [TRANSFER_TOPIC],
     })
     transfers = [decode_transfer(log) for log in logs if len(log["topics"]) == 3]
+    s = summarize(transfers)
+
+    if args.json:
+        print(json.dumps(summary_to_dict(s, args.blocks, args.full), indent=2))
+        return
 
     for t in transfers[:15]:
         sender = format_address(t["from"], args.full)
         receiver = format_address(t["to"], args.full)
         print(f"block {t['block']}: {sender} -> {receiver}  {t['amount']:,.2f} USDC")
 
-    s = summarize(transfers)
     print(f"\nBlocks scanned:    {args.blocks}")
     print(f"USDC transfers:    {s['count']}")
     print(f"Total moved:       {s['total']:,.2f} USDC")
