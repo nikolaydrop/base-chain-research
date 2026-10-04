@@ -14,7 +14,7 @@ Compare with the first sample: `blocks-sample-2026-09-30.md`
 | Average block interval | 2.00 s |
 | Transactions in total | 79,758 |
 | Transactions per block | 160 average, 148 median (min 105, max 345) |
-| Transactions per block, 90th / 99th percentile | 206 / 306 |
+| Transactions per block, 90th / 99th percentile | 205 / 305 |
 | Throughput | about 80 transactions per second |
 | Gas used vs. limit | 9.6% average, 5.1% minimum, 19.5% maximum |
 | Gas limit | 400,000,000 in every block |
