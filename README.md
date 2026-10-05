@@ -43,10 +43,11 @@ python scripts/block_times.py 50
 | `scripts/latest_block.py` | Prints details of the latest Base block |
 | `scripts/block_times.py [N]` | Average time between the last N blocks |
 | `scripts/usdc_transfers.py [N] [--full] [--json]` | USDC transfers over the last N blocks with unique addresses and top senders (`--full` prints full addresses, `--json` prints only the summary as JSON) |
-| `scripts/compare_fees.py` | Compares simple transfer cost on Base and Ethereum L1 |
+| `scripts/compare_fees.py [--json]` | Compares simple transfer cost on Base and Ethereum L1 (`--json` prints JSON) |
 | `scripts/export_blocks.py [N] [path]` | Exports stats of the last N blocks to CSV |
 | `scripts/plot_blocks.py [csv] [png]` | Draws transactions and gas usage charts from the CSV |
 | `scripts/block_stats.py [csv]` | Prints summary stats from the CSV, including median and percentiles |
+| `scripts/fee_history.py [N]` | Summarizes the base fee history of the last N blocks |
 
 ## Tests
 ```bash
