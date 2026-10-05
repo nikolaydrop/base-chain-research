@@ -1,0 +1,5 @@
+Blocks:          100 (52191330 to 52191429)
+Base fee min:    0.005000 gwei
+Base fee max:    0.005000 gwei
+Base fee avg:    0.005000 gwei
+Gas used (avg):  8.1% of the block limit
