@@ -54,3 +54,11 @@ python scripts/block_times.py 50
 pip install -r requirements-dev.txt
 python -m pytest
 ```
+
+## Results so far
+- Usage guide with example outputs: `docs/usage.md`
+- Block samples: `analysis/blocks-sample-2026-09-30.md` (100 blocks) and `analysis/blocks-500-sample.md` (500 blocks)
+- Fees: `analysis/fees-sample-2026-09-29.md` and `analysis/fee-history-2026-10-05.md`
+- USDC transfers: `analysis/usdc-sample-2026-09-29.md` and `analysis/usdc-sample-2026-09-30.md`
+- Overall summary: `analysis/summary-2026-10-05.md`
+- Study notes: `notes/`
