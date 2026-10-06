@@ -2,6 +2,11 @@
 
 All notable changes to this project, by date (UTC).
 
+## 2026-10-06
+- Added `scripts/periodicity.py` with tests and a report on the repeating 30 second spikes.
+- Added EditorConfig, pytest configuration, CSV data quality tests, a usage guide, a summary of all samples and this changelog.
+- Extended the glossary and linked the reports from the README.
+
 ## 2026-10-05
 - Added `scripts/fee_history.py` (base fee history over the last N blocks) with tests.
 - Added a report on the base fee history and notes on the minimum base fee.
